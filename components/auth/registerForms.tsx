@@ -20,9 +20,13 @@ import { FaCircleXmark, FaCircleCheck } from "react-icons/fa6";
 
 interface RegisterFormProps {
   onSubmit?: (data: { name: string; email: string; password: string }) => void;
+  onStepChange?: (isInSecondStep: boolean) => void;
 }
 
-const RegisterForm: React.FC<RegisterFormProps> = ({ onSubmit }) => {
+const RegisterForm: React.FC<RegisterFormProps> = ({
+  onSubmit,
+  onStepChange,
+}) => {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -301,6 +305,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSubmit }) => {
     if (canContinue) {
       clearError();
       setShowMoreInputs(true);
+      onStepChange?.(true); // Notifica que entrou na segunda etapa
     }
   };
 
@@ -325,6 +330,30 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSubmit }) => {
       });
 
       console.log("Usuário cadastrado com sucesso!");
+
+      // Limpar todos os campos após cadastro bem-sucedido
+      setName("");
+      setEmail("");
+      setPassword("");
+      setConfirmPassword("");
+      setNickName("");
+      setCpf("");
+      setPhone("");
+      setBirthDate("");
+      setShowMoreInputs(false);
+
+      // Limpar estados de validação
+      setEmailExists(null);
+      setNicknameExists(null);
+      setCpfExists(null);
+      setPhoneExists(null);
+
+      // Chamar callback para notificar sucesso do cadastro
+      onSubmit?.({
+        name: name.trim(),
+        email: email.trim(),
+        password,
+      });
     } catch (error) {
       console.error("Erro no cadastro:", error);
     }
@@ -669,7 +698,10 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSubmit }) => {
               color="default"
               className="w-full rounded-full"
               size="lg"
-              onClick={() => setShowMoreInputs(false)}
+              onClick={() => {
+                setShowMoreInputs(false);
+                onStepChange?.(false); // Notifica que saiu da segunda etapa
+              }}
             >
               Voltar
             </Button>

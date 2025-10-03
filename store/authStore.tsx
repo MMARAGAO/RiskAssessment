@@ -2,6 +2,7 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { supabase, supabaseAdmin } from "@/lib/supabase";
 import type { User, Session } from "@supabase/supabase-js";
+import Cookies from "js-cookie";
 
 interface UserProfile {
   id: string;
@@ -48,6 +49,42 @@ interface AuthState {
   checkAuth: () => Promise<void>;
 }
 
+// Função para salvar dados nos cookies
+const saveAuthToCookies = (
+  user: User | null,
+  session: Session | null,
+  profile: UserProfile | null
+) => {
+  if (user && session) {
+    // Salvar token
+    Cookies.set("auth-token", session.access_token, {
+      expires: 7, // 7 dias
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+    });
+
+    // Salvar dados do usuário (sem informações sensíveis)
+    const userData = {
+      id: user.id,
+      email: user.email,
+      profile: profile,
+    };
+
+    Cookies.set("auth-user", JSON.stringify(userData), {
+      expires: 7,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+    });
+
+    console.log("Dados salvos nos cookies:", userData);
+  } else {
+    // Remover cookies
+    Cookies.remove("auth-token");
+    Cookies.remove("auth-user");
+    console.log("Cookies removidos");
+  }
+};
+
 export const useAuthStore = create<AuthState>()(
   persist(
     (set, get) => ({
@@ -60,6 +97,12 @@ export const useAuthStore = create<AuthState>()(
       login: async (data: LoginData) => {
         try {
           set({ loading: true, error: null });
+
+          // Printar as credenciais no console
+          console.log("Dados de login:", {
+            emailOrNickname: data.emailOrNickname,
+            password: data.password,
+          });
 
           let emailToLogin = data.emailOrNickname;
 
@@ -77,6 +120,7 @@ export const useAuthStore = create<AuthState>()(
             }
 
             emailToLogin = userData.email;
+            console.log("Email encontrado para o nickname:", emailToLogin);
           }
 
           const { data: authData, error: authError } =
@@ -90,6 +134,13 @@ export const useAuthStore = create<AuthState>()(
           }
 
           if (authData.user) {
+            // Printar dados do usuário autenticado
+            console.log("Usuário autenticado:", {
+              id: authData.user.id,
+              email: authData.user.email,
+              session: authData.session,
+            });
+
             // Buscar perfil do usuário
             const { data: profileData, error: profileError } = await supabase
               .from("users")
@@ -99,7 +150,12 @@ export const useAuthStore = create<AuthState>()(
 
             if (profileError) {
               console.warn("Erro ao buscar perfil:", profileError);
+            } else {
+              console.log("Perfil do usuário:", profileData);
             }
+
+            // Salvar nos cookies
+            saveAuthToCookies(authData.user, authData.session, profileData);
 
             set({
               user: authData.user,
@@ -109,6 +165,7 @@ export const useAuthStore = create<AuthState>()(
             });
           }
         } catch (error) {
+          console.error("Erro durante o login:", error);
           set({
             error:
               error instanceof Error ? error.message : "Erro ao fazer login",
@@ -169,9 +226,19 @@ export const useAuthStore = create<AuthState>()(
 
             console.log("Perfil criado com sucesso:", insertData);
 
+            // Salvar nos cookies se houver sessão
+            if (authData.session) {
+              saveAuthToCookies(
+                authData.user,
+                authData.session,
+                insertData?.[0] || null
+              );
+            }
+
             set({
               user: authData.user,
               session: authData.session,
+              profile: insertData?.[0] || null,
               loading: false,
             });
           }
@@ -194,6 +261,9 @@ export const useAuthStore = create<AuthState>()(
           if (error) {
             throw new Error(error.message);
           }
+
+          // Limpar cookies
+          saveAuthToCookies(null, null, null);
 
           set({
             user: null,
@@ -245,6 +315,9 @@ export const useAuthStore = create<AuthState>()(
               console.warn("Erro ao buscar perfil:", profileError);
             }
 
+            // Atualizar cookies com dados atuais
+            saveAuthToCookies(session.user, session, profileData);
+
             set({
               user: session.user,
               session,
@@ -252,6 +325,9 @@ export const useAuthStore = create<AuthState>()(
               loading: false,
             });
           } else {
+            // Limpar cookies se não houver sessão
+            saveAuthToCookies(null, null, null);
+
             set({
               user: null,
               session: null,
@@ -260,6 +336,9 @@ export const useAuthStore = create<AuthState>()(
             });
           }
         } catch (error) {
+          // Limpar cookies em caso de erro
+          saveAuthToCookies(null, null, null);
+
           set({
             error:
               error instanceof Error
@@ -272,6 +351,7 @@ export const useAuthStore = create<AuthState>()(
           });
         }
       },
+
       forgotPassword: async (email: string) => {
         try {
           set({ loading: true, error: null });
@@ -296,6 +376,7 @@ export const useAuthStore = create<AuthState>()(
           throw error;
         }
       },
+
       resetPassword: async (password: string) => {
         try {
           set({ loading: true, error: null });

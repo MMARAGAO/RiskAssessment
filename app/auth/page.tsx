@@ -3,12 +3,26 @@
 import LoginForm from "@/components/auth/loginForms";
 import RegisterForm from "@/components/auth/registerForms";
 import React, { useState } from "react";
-import { Button, Card, Image, Input } from "@heroui/react";
-import { ArrowLeftIcon } from "@heroicons/react/24/outline";
-import { FaApple, FaFacebook, FaGoogle } from "react-icons/fa6";
 
 export default function Page() {
   const [isLogin, setIsLogin] = useState(true);
+  const [isInSecondStep, setIsInSecondStep] = useState(false);
+
+  const handleTabChange = (newIsLogin: boolean) => {
+    // Impede mudança se estiver na segunda etapa do registro
+    if (isInSecondStep) return;
+    setIsLogin(newIsLogin);
+  };
+
+  const handleRegisterSuccess = (data: {
+    name: string;
+    email: string;
+    password: string;
+  }) => {
+    // Após cadastro bem-sucedido, volta para login
+    setIsLogin(true);
+    setIsInSecondStep(false);
+  };
 
   return (
     <>
@@ -18,7 +32,7 @@ export default function Page() {
             <img src="/logo.svg" alt="Kabat logo" className="w-6 h-6" />
             <h1 className="text-2xl font-semibold">ABAT</h1>
           </div>
-          <div className="flex flex-col gap-4 bg-white/25 dark:bg-zinc-900/25 rounded-2xl p-4 shadow-xs backdrop-blur-sm">
+          <div className="flex flex-col gap-4 bg-white/25 dark:bg-zinc-900/25 rounded-2xl p-4 shadow-xs lg:shadow-none backdrop-blur-sm">
             <div className="flex flex-col items-center justify-center">
               <h1 className="text-2xl font-semibold">Welcome Back</h1>
               <p className="text-center text-sm text-gray-500">
@@ -33,15 +47,21 @@ export default function Page() {
                 ></div>
                 <button
                   className={`w-1/2 z-10 transition-colors duration-300 ease-in-out
-                     ${isLogin ? "" : "text-gray-400 "}`}
-                  onClick={() => setIsLogin(true)}
+                     ${isLogin ? "" : "text-gray-400 "} ${
+                       isInSecondStep ? "cursor-not-allowed opacity-50" : ""
+                     }`}
+                  onClick={() => handleTabChange(true)}
+                  disabled={isInSecondStep}
                 >
                   Sign In
                 </button>
                 <button
                   className={`w-1/2 z-10 transition-colors duration-300 ease-in-out
-                     ${isLogin ? "text-gray-400" : ""}`}
-                  onClick={() => setIsLogin(false)}
+                     ${isLogin ? "text-gray-400" : ""} ${
+                       isInSecondStep ? "cursor-not-allowed opacity-50" : ""
+                     }`}
+                  onClick={() => handleTabChange(false)}
+                  disabled={isInSecondStep}
                 >
                   Sign Up
                 </button>
@@ -55,14 +75,21 @@ export default function Page() {
                 }`}
               >
                 <div
-                  className={`w-1/2 transition-opacity duration-300 ease-in-out ${isLogin ? "" : "opacity-0"}`}
+                  className={`w-1/2 transition-opacity duration-300 ease-in-out ${
+                    isLogin ? "" : "opacity-0"
+                  }`}
                 >
                   <LoginForm />
                 </div>
                 <div
-                  className={`w-1/2 transition-opacity duration-300 ease-in-out ${isLogin ? "opacity-0" : ""}`}
+                  className={`w-1/2 transition-opacity duration-300 ease-in-out ${
+                    isLogin ? "opacity-0" : ""
+                  }`}
                 >
-                  <RegisterForm />
+                  <RegisterForm
+                    onStepChange={setIsInSecondStep}
+                    onSubmit={handleRegisterSuccess}
+                  />
                 </div>
               </div>
             </div>

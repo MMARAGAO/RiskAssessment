@@ -26,3 +26,6 @@
   "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
   "exclude": ["node_modules"]
 }
+
+
+// ok, agora vamos melhorar essa tela de responder as perguntas, faça um card para cada topico e nele as informações sorbe o topico e a porcentagem de respostas, apos isso ao clicar nele aparecer as perguntas, individuais e ir respondendo para aparecer as proximas, lembrando

@@ -133,7 +133,7 @@ const LoginForm: React.FC = () => {
       await login({ emailOrNickname: emailOrNickname.trim(), password });
       // Redirecionar após login bem-sucedido
       console.log("Login realizado com sucesso! Redirecionando...");
-      router.push("/");
+      router.push("/sistema/dashboard");
     } catch (error) {
       // Erro já é tratado na store
       console.error("Erro no login:", error);
