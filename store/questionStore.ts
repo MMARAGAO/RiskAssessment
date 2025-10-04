@@ -12,29 +12,37 @@ export interface QuestionOption {
   condition_value?: string | null;
 }
 
+export type QuestionType =
+  | "yes_no"
+  | "multiple_choice"
+  | "single_choice" // ✅ Adicionar este tipo
+  | "numeric"
+  | "text";
+
 export interface Question {
   id: string;
   topic_id: string;
   parent_question_id: string | null;
   question_text: string;
-  question_type: "yes_no" | "multiple_choice" | "numeric" | "text";
+  question_type: QuestionType; // ✅ Usar o type union atualizado
   max_score: number;
   weight: number;
   is_critical: boolean;
   help_text: string | null;
   display_order: number;
   created_at: string;
+  updated_at: string;
+  condition_parent_answer: string | null;
+  condition_parent_option_id: string | null;
   options?: QuestionOption[];
   subquestions?: Question[];
-  condition_parent_answer?: string | null;
-  condition_parent_option_id?: string | null;
 }
 
 export interface QuestionFormData {
   topic_id: string;
   parent_question_id: string | null;
   question_text: string;
-  question_type: "yes_no" | "multiple_choice" | "numeric" | "text";
+  question_type: QuestionType; // ✅ Usar o type union atualizado
   max_score: number;
   weight: number;
   is_critical: boolean;
@@ -51,6 +59,8 @@ export interface QuestionTopic {
   building_type: string;
   display_order: number;
   created_at: string;
+  updated_at: string;
+  questions?: Question[]; // ✅ Adicionar campo opcional de perguntas
 }
 
 interface QuestionStore {
@@ -59,17 +69,15 @@ interface QuestionStore {
   error: string | null;
 
   fetchTopics: (buildingType?: string) => Promise<void>;
-  createTopic: (
-    data: Omit<QuestionTopic, "id" | "created_at">
-  ) => Promise<void>;
-  updateTopic: (id: string, data: Partial<QuestionTopic>) => Promise<void>;
+  createTopic: (data: Omit<QuestionTopic, "id" | "created_at" | "updated_at">) => Promise<void>;
+  updateTopic: (id: string, data: Partial<Omit<QuestionTopic, "id" | "created_at" | "updated_at">>) => Promise<void>;
   deleteTopic: (id: string) => Promise<void>;
 
   fetchQuestionTree: (topicId: string) => Promise<Question[]>;
   createQuestion: (
     data: QuestionFormData,
-    options?: Omit<QuestionOption, "id" | "question_id" | "created_at">[]
-  ) => Promise<void>;
+    options?: Omit<QuestionOption, "id" | "created_at" | "question_id">[] // ✅ Adicionar question_id ao Omit
+  ) => Promise<Question>;
   updateQuestion: (
     id: string,
     data: Partial<QuestionFormData>
@@ -232,44 +240,46 @@ export const useQuestionStore = create<QuestionStore>((set, get) => ({
   createQuestion: async (data, options = []) => {
     set({ loading: true, error: null });
     try {
-      console.log("Criando pergunta:", data);
+      console.log("📝 Criando pergunta:", { data, options });
 
-      // Inserir pergunta
       const { data: question, error: questionError } = await supabase
         .from("questions")
-        .insert([data])
+        .insert(data)
         .select()
         .single();
 
       if (questionError) {
-        console.error("Erro ao inserir pergunta:", questionError);
+        console.error("❌ Erro ao criar pergunta:", questionError);
         throw questionError;
       }
 
-      console.log("Pergunta criada:", question);
+      console.log("✅ Pergunta criada:", question);
 
-      // Se tiver opções, inserir
-      if (options.length > 0 && question) {
+      // ✅ Adicionar question_id às opções antes de inserir
+      if (options && options.length > 0) {
         const optionsWithQuestionId = options.map((opt) => ({
           ...opt,
-          question_id: question.id,
+          question_id: question.id, // ✅ Adicionar o ID da pergunta criada
         }));
 
-        console.log("Inserindo opções:", optionsWithQuestionId);
+        console.log("📝 Inserindo opções:", optionsWithQuestionId);
 
         const { error: optionsError } = await supabase
           .from("question_options")
           .insert(optionsWithQuestionId);
 
         if (optionsError) {
-          console.error("Erro ao inserir opções:", optionsError);
+          console.error("❌ Erro ao criar opções:", optionsError);
           throw optionsError;
         }
+
+        console.log("✅ Opções criadas com sucesso");
       }
 
       set({ loading: false });
+      return question;
     } catch (error: any) {
-      console.error("Erro ao criar pergunta:", error);
+      console.error("❌ Erro no createQuestion:", error);
       set({ error: error.message, loading: false });
       throw error;
     }

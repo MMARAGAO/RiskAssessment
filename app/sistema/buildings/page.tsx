@@ -281,8 +281,8 @@ export default function EdificiosPage() {
   };
 
   return (
-    <div className="min-h-screen bg-white dark:bg-zinc-950 p-4 md:p-8">
-      <div className="max-w-7xl mx-auto">
+    <div className="min-h-screen   p-4 md:p-8">
+      <div className="">
         {/* Header */}
         <div className="mb-8">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
@@ -433,9 +433,13 @@ export default function EdificiosPage() {
                           isIconOnly
                           variant="flat"
                           size="sm"
-                          onPress={() =>
-                            router.push(`/sistema/assessments/${building.id}`)
-                          }
+                          as="button" // ✅ Forçar como button
+                          type="button" // ✅ Evitar submit
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            router.push(`/sistema/assessments/${building.id}`);
+                          }}
                           className="bg-green-50 hover:bg-green-100 dark:bg-green-950/30 dark:hover:bg-green-950/50 text-green-600 dark:text-green-400"
                         >
                           <ClipboardCheck className="h-4 w-4" />

@@ -38,6 +38,8 @@ const NAV_ITEMS: NavItem[] = [
   { icon: Home, label: "Home", href: "/sistema" },
   { icon: LayoutDashboard, label: "Dashboard", href: "/sistema/dashboard" },
   { icon: FileText, label: "Relatórios", href: "/sistema/relatorios" },
+  // questionnaires
+  { icon: ClipboardCheck, label: "Questionários", href: "/sistema/questionnaires" },
   { icon: Users, label: "Usuários", href: "/sistema/usuarios" },
   { icon: Building2, label: "Edifícios", href: "/sistema/buildings" },
   { icon: ClipboardCheck, label: "Questões", href: "/sistema/questions" },
@@ -52,6 +54,8 @@ const VectorLogo = ({ className = "" }: { className?: string }) => (
   </svg>
 );
 
+
+    
 export default function Navbar({ isExpanded = false }: NavbarProps) {
   const [expanded, setExpanded] = useState(isExpanded);
   const [isDark, setIsDark] = useState(true);

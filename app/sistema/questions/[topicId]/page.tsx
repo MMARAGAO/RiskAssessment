@@ -54,8 +54,10 @@ const buildingTypeIcons = {
   Misto: Building,
 };
 
+
 const questionTypes = [
   { value: "yes_no", label: "Sim/Não", icon: CheckCircle },
+  { value: "single_choice", label: "Escolha Única", icon: ListIcon },  // ✅ Adicionar
   { value: "multiple_choice", label: "Múltipla Escolha", icon: ListIcon },
   { value: "numeric", label: "Numérica", icon: Hash },
   { value: "text", label: "Texto Livre", icon: FileText },
@@ -101,7 +103,7 @@ export default function TopicDetailPage() {
   });
 
   const [optionsData, setOptionsData] = useState<
-    Omit<QuestionOption, "id" | "question_id" | "created_at">[]
+    Omit<QuestionOption, "id" | "created_at">[] // ✅ Remover "question_id" do Omit
   >([]);
 
   useEffect(() => {
@@ -151,33 +153,57 @@ export default function TopicDetailPage() {
   };
 
   // ✅ ATUALIZADO: Agora aceita parent como segundo parâmetro
-  const handleOpenQuestionModal = (
+    const handleOpenQuestionModal = (
     questionOrParent?: Question | null,
     isEditingQuestion?: boolean
   ) => {
     try {
-      // Se isEditingQuestion for true, o primeiro parâmetro é a pergunta sendo editada
       if (isEditingQuestion && questionOrParent) {
         const question = questionOrParent;
 
-        // Precisamos encontrar o parent desta pergunta
+        // Buscar o parent da pergunta
         const findParent = (
           qs: Question[],
-          targetId: string
+          targetId: string,
+          parentId?: string
         ): Question | null => {
           for (const q of qs) {
-            if (q.id === targetId) return null; // É raiz
-            if (q.subquestions) {
-              const found = q.subquestions.find((sub) => sub.id === targetId);
-              if (found) return q;
-              const nested = findParent(q.subquestions, targetId);
-              if (nested) return nested;
+            // Se encontrou o parent pelo ID
+            if (parentId && q.id === parentId) {
+              console.log("✅ Parent encontrado por ID:", q);
+              return q;
+            }
+            
+            // Verifica se alguma subquestion é a pergunta alvo
+            if (q.subquestions && q.subquestions.length > 0) {
+              const isDirectParent = q.subquestions.some(sub => sub.id === targetId);
+              if (isDirectParent) {
+                console.log("✅ Parent encontrado como parent direto:", q);
+                return q;
+              }
+              
+              // Busca recursiva nas subquestions
+              const found = findParent(q.subquestions, targetId, parentId);
+              if (found) return found;
             }
           }
           return null;
         };
 
-        const parent = findParent(questions, question.id);
+        const parent = question.parent_question_id 
+          ? findParent(questions, question.id, question.parent_question_id)
+          : null;
+
+        console.log("🔍 Debug completo:", {
+          questionId: question.id,
+          questionText: question.question_text,
+          parentQuestionId: question.parent_question_id,
+          parentFound: parent,
+          parentType: parent?.question_type,
+          parentOptions: parent?.options,
+          condition_parent_answer: question.condition_parent_answer,
+          condition_parent_option_id: question.condition_parent_option_id,
+        });
 
         setIsEditMode(true);
         setCurrentQuestion(question);
@@ -193,12 +219,11 @@ export default function TopicDetailPage() {
           help_text: question.help_text,
           display_order: question.display_order,
           condition_parent_answer: question.condition_parent_answer || null,
-          condition_parent_option_id:
-            question.condition_parent_option_id || null,
+          condition_parent_option_id: question.condition_parent_option_id || null,
         });
         setOptionsData(question.options || []);
       } else {
-        // Modo de criação: primeiro parâmetro é o parent
+        // Modo de criação
         const parent = questionOrParent || null;
         setIsEditMode(false);
         setCurrentQuestion(null);
@@ -221,10 +246,8 @@ export default function TopicDetailPage() {
       }
       onQuestionModalOpen();
     } catch (error: any) {
-      console.error("Erro ao abrir modal:", error);
-      toast.error(
-        `Erro ao abrir modal: ${error?.message || "Erro desconhecido"}`
-      );
+      console.error("❌ Erro ao abrir modal:", error);
+      toast.error(`Erro ao abrir modal: ${error?.message || "Erro desconhecido"}`);
     }
   };
 
@@ -308,6 +331,7 @@ export default function TopicDetailPage() {
     setOptionsData([
       ...optionsData,
       {
+        question_id: "", // ✅ Será preenchido ao salvar
         option_text: "",
         score_value: 0,
         triggers_subquestion: false,
@@ -374,7 +398,7 @@ export default function TopicDetailPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-zinc-50 via-blue-50/30 to-zinc-50 dark:from-zinc-950 dark:via-blue-950/10 dark:to-zinc-950 p-4 md:p-8">
-      <div className="max-w-7xl mx-auto">
+      <div className="">
         {/* Header */}
         <div className="mb-8">
           <Button
@@ -748,11 +772,14 @@ export default function TopicDetailPage() {
                         Condição de Exibição
                       </h3>
                       <p className="text-sm text-blue-700 dark:text-blue-300 mb-4">
-                        Esta sub-pergunta será exibida apenas quando a condição
-                        for atendida
+                        Esta sub-pergunta será exibida apenas quando a condição for atendida
                       </p>
 
-                      {parentQuestion.question_type === "multiple_choice" ? (
+                      {/* ✅ REMOVIDO: Box de debug */}
+
+                      {/* ✅ ADICIONADO: Verificação para single_choice e multiple_choice */}
+                      {(parentQuestion.question_type === "multiple_choice" || 
+                        parentQuestion.question_type === "single_choice") ? (
                         <Select
                           label="Exibir quando a opção selecionada for"
                           selectedKeys={
@@ -760,16 +787,17 @@ export default function TopicDetailPage() {
                               ? [questionFormData.condition_parent_option_id]
                               : []
                           }
-                          onChange={(e) =>
+                          onChange={(e) => {
+                            console.log("Selecionou opção:", e.target.value);
                             setQuestionFormData({
                               ...questionFormData,
-                              condition_parent_option_id:
-                                e.target.value || null,
+                              condition_parent_option_id: e.target.value || null,
                               condition_parent_answer: null,
-                            })
-                          }
+                            });
+                          }}
                           variant="bordered"
                           size="lg"
+                          placeholder="Selecione uma opção"
                           classNames={{
                             label: "font-semibold",
                             trigger: "border-2",
@@ -792,15 +820,17 @@ export default function TopicDetailPage() {
                               ? [questionFormData.condition_parent_answer]
                               : []
                           }
-                          onChange={(e) =>
+                          onChange={(e) => {
+                            console.log("Selecionou yes/no:", e.target.value);
                             setQuestionFormData({
                               ...questionFormData,
                               condition_parent_answer: e.target.value || null,
                               condition_parent_option_id: null,
-                            })
-                          }
+                            });
+                          }}
                           variant="bordered"
                           size="lg"
+                          placeholder="Selecione Sim ou Não"
                           classNames={{
                             label: "font-semibold",
                             trigger: "border-2",
@@ -818,13 +848,14 @@ export default function TopicDetailPage() {
                           label="Exibir quando o valor for"
                           placeholder="Digite o valor exato..."
                           value={questionFormData.condition_parent_answer || ""}
-                          onChange={(e) =>
+                          onChange={(e) => {
+                            console.log("Digitou valor:", e.target.value);
                             setQuestionFormData({
                               ...questionFormData,
                               condition_parent_answer: e.target.value || null,
                               condition_parent_option_id: null,
-                            })
-                          }
+                            });
+                          }}
                           variant="bordered"
                           size="lg"
                           classNames={{
@@ -836,7 +867,9 @@ export default function TopicDetailPage() {
                     </div>
                   )}
 
-                  {questionFormData.question_type === "multiple_choice" && (
+                  {/* Opções de Resposta - para single_choice e multiple_choice */}
+                  {(questionFormData.question_type === "multiple_choice" ||
+                    questionFormData.question_type === "single_choice") && (
                     <div className="p-6 bg-blue-50 dark:bg-blue-950/30 rounded-xl border-2 border-blue-200 dark:border-blue-800">
                       <div className="flex justify-between items-center mb-4">
                         <h3 className="font-bold text-lg flex items-center gap-2">

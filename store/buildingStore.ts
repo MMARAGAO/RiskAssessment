@@ -38,7 +38,7 @@ interface BuildingStore {
   buildings: Building[];
   loading: boolean;
   error: string | null;
-  fetchBuildings: () => Promise<void>;
+  fetchBuildings: () => Promise<Building[]>; // ✅ Mudado de void para Building[]
   createBuilding: (building: BuildingFormData) => Promise<void>;
   updateBuilding: (
     id: string,
@@ -70,9 +70,14 @@ export const useBuildingStore = create<BuildingStore>((set) => ({
         .order("created_at", { ascending: false });
 
       if (error) throw error;
+
+      console.log("🏢 Buildings carregados:", data?.length || 0);
       set({ buildings: data || [], loading: false });
+      return data || []; // ✅ Agora retorna os dados corretamente
     } catch (error: any) {
-      set({ error: error.message, loading: false });
+      console.error("❌ Erro ao carregar buildings:", error);
+      set({ error: error.message, loading: false, buildings: [] });
+      return []; // ✅ Retorna array vazio em caso de erro
     }
   },
 

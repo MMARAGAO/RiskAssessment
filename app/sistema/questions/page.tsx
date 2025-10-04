@@ -143,12 +143,7 @@ export default function QuestionsPage() {
     }
   };
 
-  const handleDeleteTopic = async (
-    e: React.MouseEvent,
-    id: string,
-    name: string
-  ) => {
-    e.stopPropagation();
+  const handleDeleteTopic = async (id: string, name: string) => {
     if (
       confirm(
         `Tem certeza que deseja excluir o tópico "${name}"? Todas as perguntas associadas serão excluídas.`
@@ -185,7 +180,7 @@ export default function QuestionsPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-zinc-50 via-blue-50/30 to-zinc-50 dark:from-zinc-950 dark:via-blue-950/10 dark:to-zinc-950 p-4 md:p-8">
-      <div className="max-w-7xl mx-auto">
+      <div className="">
         {/* Header */}
         <div className="mb-8">
           <div className="flex items-center gap-4 mb-4">
@@ -342,7 +337,7 @@ export default function QuestionsPage() {
                         </div>
 
                         {/* Actions */}
-                        <div className="flex gap-2">
+                        <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>
                           <Button
                             isIconOnly
                             size="sm"
@@ -357,13 +352,11 @@ export default function QuestionsPage() {
                             size="sm"
                             variant="flat"
                             className="bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 border border-zinc-200 dark:border-zinc-700"
-                            onPress={(e) =>
-                              handleDeleteTopic(e as any, topic.id, topic.name)
-                            }
+                            onPress={() => handleDeleteTopic(topic.id, topic.name)}
                           >
                             <Trash2 className="h-4 w-4" />
                           </Button>
-                        </div>
+                        </div>  
                       </div>
 
                       {/* Content */}
