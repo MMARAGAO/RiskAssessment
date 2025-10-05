@@ -361,10 +361,10 @@ export default function AssessmentPage() {
           <Button
             variant="light"
             startContent={<ArrowLeft className="h-4 w-4" />}
-            onClick={() => router.push("/sistema/buildings")}
+            onClick={() => router.push("/sistema/questionnaires")}
             className="mb-4 text-zinc-600 dark:text-zinc-400"
           >
-            Voltar para Edifícios
+            Voltar para Questionários
           </Button>
 
           <Card className="bg-gradient-to-r from-blue-600 to-blue-700 border-0">
@@ -448,7 +448,7 @@ export default function AssessmentPage() {
           </p>
         </div>
 
-        <div className="space-y-4 mb-8">
+        <div className="grid gap-6 md:grid-cols-2">
           {topics.map((topic, index) => {
             const progress = calculateTopicProgress(topic.id);
             const scoreData = calculateTopicScore(topic.id); // ✅ Calcular pontuação
