@@ -38,42 +38,36 @@ export default function Home() {
       title: "Gestão Avançada de Riscos",
       description:
         "Metodologias reconhecidas internacionalmente para identificação, análise e tratamento de riscos corporativos.",
-      color: "blue",
     },
     {
       icon: ChartBar,
       title: "Business Intelligence",
       description:
         "Dashboards executivos com KPIs estratégicos, análise de tendências e visualização de dados em tempo real.",
-      color: "purple",
     },
     {
       icon: Users,
       title: "Governança Corporativa",
       description:
         "Gestão hierárquica de usuários com controle granular de permissões e trilhas de auditoria completas.",
-      color: "green",
     },
     {
       icon: FileCheck,
       title: "Compliance & Reporting",
       description:
         "Relatórios automatizados em conformidade com ISO 31000, COSO ERM, SOX e outras normas internacionais.",
-      color: "orange",
     },
     {
       icon: AlertTriangle,
       title: "Monitoramento Contínuo",
       description:
         "Sistema de alertas inteligentes com notificações customizáveis para eventos críticos e desvios de indicadores.",
-      color: "red",
     },
     {
       icon: TrendingUp,
       title: "Analytics Preditivo",
       description:
         "Inteligência artificial e machine learning para análise preditiva de cenários e simulações de risco.",
-      color: "cyan",
     },
   ];
 
@@ -185,7 +179,7 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-white dark:bg-zinc-950">
       {/* Hero Section */}
-      <section className="relative overflow-hidden bg-gradient-to-br from-zinc-50 via-blue-50/30 to-purple-50/20 dark:from-zinc-950 dark:via-blue-950/10 dark:to-purple-950/10 py-24 md:py-32 lg:py-40">
+      <section className="relative overflow-hidden bg-gradient-to-br from-zinc-50 via-blue-50/30 to-blue-50/20 dark:from-zinc-950 dark:via-blue-950/10 dark:to-blue-950/10 py-24 md:py-32 lg:py-40">
         <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:24px_24px]" />
         <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-white dark:to-zinc-950" />
 
@@ -201,7 +195,7 @@ export default function Home() {
             <h1 className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-extrabold text-zinc-900 dark:text-white mb-8 leading-tight tracking-tight">
               Excelência em
               <br />
-              <span className="bg-gradient-to-r from-blue-600 via-purple-600 to-blue-600 bg-clip-text text-transparent bg-[length:200%_auto] animate-gradient">
+              <span className="bg-gradient-to-r from-blue-600 via-blue-500 to-blue-600 bg-clip-text text-transparent bg-[length:200%_auto] animate-gradient">
                 Gestão de Riscos
               </span>
             </h1>
@@ -219,14 +213,14 @@ export default function Home() {
                 as={Link}
                 href="/auth/register"
                 size="lg"
-                className="bg-gradient-to-r from-blue-600 to-purple-600 text-white font-semibold shadow-2xl shadow-blue-500/25 hover:shadow-blue-500/40 transition-all px-10 h-14 text-base"
+                className="bg-gradient-to-r from-blue-600 to-blue-500 text-white font-semibold shadow-2xl shadow-blue-500/25 hover:shadow-blue-500/40 transition-all px-10 h-14 text-base"
                 endContent={<ArrowRight className="h-5 w-5" />}
               >
                 Solicitar Demo
               </Button>
               <Button
                 as={Link}
-                href="/auth/login"
+                href="/auth"
                 size="lg"
                 variant="bordered"
                 className="border-2 border-zinc-300 dark:border-zinc-700 font-semibold px-10 h-14 text-base hover:bg-zinc-50 dark:hover:bg-zinc-900"
@@ -238,15 +232,15 @@ export default function Home() {
             {/* Trust Indicators */}
             <div className="flex flex-wrap justify-center items-center gap-x-8 gap-y-4 text-sm text-zinc-600 dark:text-zinc-500">
               <div className="flex items-center gap-2">
-                <CheckCircle className="h-5 w-5 text-green-600 dark:text-green-500" />
+                <CheckCircle className="h-5 w-5 text-blue-600 dark:text-blue-500" />
                 <span className="font-medium">Trial de 30 dias</span>
               </div>
               <div className="flex items-center gap-2">
-                <CheckCircle className="h-5 w-5 text-green-600 dark:text-green-500" />
+                <CheckCircle className="h-5 w-5 text-blue-600 dark:text-blue-500" />
                 <span className="font-medium">Setup personalizado</span>
               </div>
               <div className="flex items-center gap-2">
-                <CheckCircle className="h-5 w-5 text-green-600 dark:text-green-500" />
+                <CheckCircle className="h-5 w-5 text-blue-600 dark:text-blue-500" />
                 <span className="font-medium">Suporte dedicado</span>
               </div>
             </div>
@@ -260,7 +254,7 @@ export default function Home() {
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-12">
             {stats.map((stat, index) => (
               <div key={index} className="text-center">
-                <div className="text-5xl md:text-6xl font-bold bg-gradient-to-br from-blue-600 to-purple-600 bg-clip-text text-transparent mb-3">
+                <div className="text-5xl md:text-6xl font-bold bg-gradient-to-br from-blue-600 to-blue-500 bg-clip-text text-transparent mb-3">
                   {stat.value}
                 </div>
                 <div className="text-zinc-900 dark:text-white font-semibold text-lg mb-1">
@@ -283,7 +277,7 @@ export default function Home() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Section Header */}
           <div className="text-center mb-20">
-            <div className="inline-flex items-center gap-2 bg-purple-100 dark:bg-purple-950/30 text-purple-700 dark:text-purple-300 px-4 py-2 rounded-full text-sm font-semibold mb-6">
+            <div className="inline-flex items-center gap-2 bg-blue-100 dark:bg-blue-950/30 text-blue-700 dark:text-blue-300 px-4 py-2 rounded-full text-sm font-semibold mb-6">
               <BarChart3 className="h-4 w-4" />
               <span>Recursos Enterprise</span>
             </div>
@@ -302,14 +296,6 @@ export default function Home() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {features.map((feature, index) => {
               const Icon = feature.icon;
-              const colorClasses = {
-                blue: "from-blue-500 to-blue-600",
-                purple: "from-purple-500 to-purple-600",
-                green: "from-green-500 to-green-600",
-                orange: "from-orange-500 to-orange-600",
-                red: "from-red-500 to-red-600",
-                cyan: "from-cyan-500 to-cyan-600",
-              };
 
               return (
                 <Card
@@ -317,11 +303,7 @@ export default function Home() {
                   className="bg-white dark:bg-zinc-900 border-2 border-zinc-200 dark:border-zinc-800 hover:border-blue-500 dark:hover:border-blue-500 transition-all hover:shadow-2xl group cursor-pointer"
                 >
                   <CardBody className="p-8">
-                    <div
-                      className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${
-                        colorClasses[feature.color as keyof typeof colorClasses]
-                      } flex items-center justify-center mb-6 group-hover:scale-110 transition-transform shadow-lg`}
-                    >
+                    <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform shadow-lg">
                       <Icon className="h-7 w-7 text-white" />
                     </div>
                     <h3 className="text-2xl font-bold text-zinc-900 dark:text-white mb-3">
@@ -344,7 +326,7 @@ export default function Home() {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
             {/* Content */}
             <div>
-              <div className="inline-flex items-center gap-2 bg-green-100 dark:bg-green-950/30 text-green-700 dark:text-green-300 px-4 py-2 rounded-full text-sm font-semibold mb-6">
+              <div className="inline-flex items-center gap-2 bg-blue-100 dark:bg-blue-950/30 text-blue-700 dark:text-blue-300 px-4 py-2 rounded-full text-sm font-semibold mb-6">
                 <Award className="h-4 w-4" />
                 <span>Diferenciais Competitivos</span>
               </div>
@@ -367,7 +349,7 @@ export default function Home() {
                       key={index}
                       className="flex items-start gap-4 p-4 rounded-xl hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors"
                     >
-                      <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-gradient-to-br from-green-500 to-green-600 flex items-center justify-center shadow-lg">
+                      <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center shadow-lg">
                         <Icon className="h-5 w-5 text-white" />
                       </div>
                       <p className="text-zinc-700 dark:text-zinc-300 font-medium text-lg pt-1.5">
@@ -381,7 +363,7 @@ export default function Home() {
 
             {/* Visual */}
             <div className="relative">
-              <div className="aspect-square rounded-3xl bg-gradient-to-br from-blue-500 via-purple-600 to-blue-500 p-1 shadow-2xl">
+              <div className="aspect-square rounded-3xl bg-gradient-to-br from-blue-500 to-blue-600 p-1 shadow-2xl">
                 <div className="w-full h-full rounded-[23px] bg-white dark:bg-zinc-900 p-12 flex flex-col items-center justify-center">
                   <LineChart className="h-40 w-40 text-blue-600 dark:text-blue-400 mb-8" />
                   <h3 className="text-3xl font-bold text-zinc-900 dark:text-white mb-4 text-center">
@@ -393,7 +375,7 @@ export default function Home() {
                 </div>
               </div>
               {/* Floating element */}
-              <div className="absolute -bottom-6 -right-6 bg-gradient-to-br from-purple-600 to-blue-600 text-white p-6 rounded-2xl shadow-2xl">
+              <div className="absolute -bottom-6 -right-6 bg-gradient-to-br from-blue-600 to-blue-500 text-white p-6 rounded-2xl shadow-2xl">
                 <div className="text-3xl font-bold mb-1">+165%</div>
                 <div className="text-sm font-medium opacity-90">
                   ROI Médio em 12 meses
@@ -426,7 +408,7 @@ export default function Home() {
       </section>
 
       {/* CTA Section */}
-      <section className="py-24 md:py-32 bg-gradient-to-br from-blue-600 via-purple-600 to-blue-700 relative overflow-hidden">
+      <section className="py-24 md:py-32 bg-gradient-to-br from-blue-600 via-blue-500 to-blue-700 relative overflow-hidden">
         <div className="absolute inset-0 bg-[linear-gradient(to_right,#ffffff12_1px,transparent_1px),linear-gradient(to_bottom,#ffffff12_1px,transparent_1px)] bg-[size:24px_24px]" />
         <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent" />
 
@@ -457,7 +439,7 @@ export default function Home() {
             </Button>
             <Button
               as={Link}
-              href="/auth/login"
+              href="/auth"
               size="lg"
               variant="bordered"
               className="border-2 border-white text-white font-semibold hover:bg-white/10 backdrop-blur-sm px-10 h-14 text-base"
@@ -480,7 +462,7 @@ export default function Home() {
             {/* Brand Column */}
             <div className="lg:col-span-2">
               <div className="flex items-center gap-2 mb-6">
-                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-600 to-purple-600 flex items-center justify-center">
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-600 to-blue-500 flex items-center justify-center">
                   <Shield className="h-6 w-6 text-white" />
                 </div>
                 <span className="text-xl font-bold">RiskAssessment</span>
@@ -600,7 +582,7 @@ export default function Home() {
                   placeholder="Seu email corporativo"
                   className="flex-1 px-4 py-3 bg-zinc-800 border border-zinc-700 rounded-lg text-white placeholder:text-zinc-500 focus:outline-none focus:border-blue-500 transition-colors"
                 />
-                <Button className="bg-gradient-to-r from-blue-600 to-purple-600 text-white font-semibold px-8 hover:shadow-lg hover:shadow-blue-500/30 transition-all">
+                <Button className="bg-gradient-to-r from-blue-600 to-blue-500 text-white font-semibold px-8 hover:shadow-lg hover:shadow-blue-500/30 transition-all">
                   Inscrever
                 </Button>
               </div>
