@@ -28,10 +28,13 @@ interface AssessmentStore {
   answers: Map<string, Answer>;
   loading: boolean;
   error: string | null;
+  // ✅ Lock para evitar chamadas simultâneas
+  isCreating: boolean;
 
+  getOrCreateAssessment: (buildingId: string) => Promise<Assessment>;
   fetchAssessment: (buildingId: string) => Promise<void>;
   createAssessment: (buildingId: string) => Promise<string>;
-  saveAnswer: (questionId: string, answer: Answer) => Promise<void>; // ✅ 2 parâmetros apenas
+  saveAnswer: (questionId: string, answer: Answer) => Promise<void>;
   fetchAnswers: (assessmentId: string) => Promise<void>;
   completeAssessment: (assessmentId: string) => Promise<void>;
   clearCurrentAssessment: () => void;
@@ -42,6 +45,165 @@ export const useAssessmentStore = create<AssessmentStore>((set, get) => ({
   answers: new Map(),
   loading: false,
   error: null,
+  isCreating: false,
+
+  getOrCreateAssessment: async (buildingId: string) => {
+    // ✅ VERIFICAR SE JÁ EXISTE UM ASSESSMENT NO ESTADO
+    const { currentAssessment, isCreating } = get();
+
+    // Se já tem um assessment do mesmo building, retornar ele
+    if (currentAssessment && currentAssessment.building_id === buildingId) {
+      console.log("✅ Assessment já existe no estado:", currentAssessment.id);
+      return currentAssessment;
+    }
+
+    // ✅ EVITAR CHAMADAS SIMULTÂNEAS
+    if (isCreating) {
+      console.log("⏳ Já está criando um assessment, aguardando...");
+      // Aguardar até que termine
+      return new Promise((resolve) => {
+        const interval = setInterval(() => {
+          const { currentAssessment: current, isCreating: creating } = get();
+          if (!creating && current) {
+            clearInterval(interval);
+            resolve(current);
+          }
+        }, 100);
+
+        // Timeout de 10 segundos
+        setTimeout(() => {
+          clearInterval(interval);
+          throw new Error("Timeout ao aguardar criação de assessment");
+        }, 10000);
+      });
+    }
+
+    set({ loading: true, error: null, isCreating: true });
+
+    try {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      if (!user) throw new Error("Usuário não autenticado");
+
+      console.log("🔍 Buscando assessment em andamento para:", {
+        buildingId,
+        userId: user.id,
+      });
+
+      // ✅ Buscar avaliação em andamento
+      const { data: existingAssessments, error: fetchError } = await supabase
+        .from("risk_assessments")
+        .select("*")
+        .eq("building_id", buildingId)
+        .eq("user_id", user.id)
+        .eq("status", "in_progress")
+        .order("created_at", { ascending: false })
+        .limit(1);
+
+      if (fetchError) throw fetchError;
+
+      if (existingAssessments && existingAssessments.length > 0) {
+        const assessment = existingAssessments[0];
+        console.log("✅ Avaliação em andamento encontrada:", assessment.id);
+
+        await get().fetchAnswers(assessment.id);
+
+        set({
+          currentAssessment: assessment,
+          loading: false,
+          isCreating: false,
+        });
+
+        return assessment;
+      }
+
+      // ✅ CRIAR NOVA AVALIAÇÃO COM UNIQUE CONSTRAINT CHECK
+      console.log("➕ Criando nova avaliação...");
+
+      // Buscar novamente para garantir (race condition protection)
+      const { data: doubleCheck } = await supabase
+        .from("risk_assessments")
+        .select("*")
+        .eq("building_id", buildingId)
+        .eq("user_id", user.id)
+        .eq("status", "in_progress")
+        .maybeSingle();
+
+      if (doubleCheck) {
+        console.log("⚠️ Assessment criado em outra thread:", doubleCheck.id);
+        await get().fetchAnswers(doubleCheck.id);
+
+        set({
+          currentAssessment: doubleCheck,
+          loading: false,
+          isCreating: false,
+        });
+
+        return doubleCheck;
+      }
+
+      const { data: newAssessment, error: createError } = await supabase
+        .from("risk_assessments")
+        .insert({
+          building_id: buildingId,
+          user_id: user.id,
+          status: "in_progress",
+          assessment_date: new Date().toISOString(),
+        })
+        .select()
+        .single();
+
+      if (createError) {
+        // Se deu erro de unique constraint, buscar o existente
+        if (createError.code === "23505") {
+          console.log(
+            "⚠️ Conflito detectado, buscando assessment existente..."
+          );
+
+          const { data: existing } = await supabase
+            .from("risk_assessments")
+            .select("*")
+            .eq("building_id", buildingId)
+            .eq("user_id", user.id)
+            .eq("status", "in_progress")
+            .order("created_at", { ascending: false })
+            .limit(1)
+            .single();
+
+          if (existing) {
+            await get().fetchAnswers(existing.id);
+
+            set({
+              currentAssessment: existing,
+              loading: false,
+              isCreating: false,
+            });
+
+            return existing;
+          }
+        }
+
+        throw createError;
+      }
+
+      console.log("✅ Nova avaliação criada:", newAssessment.id);
+
+      set({
+        currentAssessment: newAssessment,
+        answers: new Map(),
+        loading: false,
+        isCreating: false,
+      });
+
+      return newAssessment;
+    } catch (error: any) {
+      console.error("❌ Erro ao buscar/criar assessment:", error);
+      set({ error: error.message, loading: false, isCreating: false });
+      throw error;
+    }
+  },
 
   fetchAssessment: async (buildingId: string) => {
     set({ loading: true, error: null });
@@ -57,12 +219,15 @@ export const useAssessmentStore = create<AssessmentStore>((set, get) => ({
         .select("*")
         .eq("building_id", buildingId)
         .eq("user_id", user.id)
+        .eq("status", "in_progress")
         .order("created_at", { ascending: false })
         .limit(1)
-        .single();
+        .maybeSingle();
 
-      if (error && error.code !== "PGRST116") {
-        throw error;
+      if (error) throw error;
+
+      if (data) {
+        await get().fetchAnswers(data.id);
       }
 
       set({ currentAssessment: data || null, loading: false });
@@ -73,33 +238,12 @@ export const useAssessmentStore = create<AssessmentStore>((set, get) => ({
   },
 
   createAssessment: async (buildingId: string) => {
-    set({ loading: true, error: null });
-    try {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-
-      if (!user) throw new Error("Usuário não autenticado");
-
-      const { data, error } = await supabase
-        .from("risk_assessments")
-        .insert({
-          building_id: buildingId,
-          user_id: user.id,
-          status: "in_progress",
-        })
-        .select()
-        .single();
-
-      if (error) throw error;
-
-      set({ currentAssessment: data, loading: false });
-      return data.id;
-    } catch (error: any) {
-      console.error("❌ Erro ao criar assessment:", error);
-      set({ error: error.message, loading: false });
-      throw error;
-    }
+    // ⚠️ DEPRECADO: Use getOrCreateAssessment ao invés
+    console.warn(
+      "⚠️ createAssessment está deprecado. Use getOrCreateAssessment"
+    );
+    const assessment = await get().getOrCreateAssessment(buildingId);
+    return assessment.id;
   },
 
   saveAnswer: async (questionId: string, answer: Answer) => {
@@ -116,7 +260,6 @@ export const useAssessmentStore = create<AssessmentStore>((set, get) => ({
         answer,
       });
 
-      // ✅ VALIDAR SE A PERGUNTA EXISTE ANTES DE SALVAR
       const { data: questionExists, error: questionError } = await supabase
         .from("questions")
         .select("id")
@@ -136,7 +279,6 @@ export const useAssessmentStore = create<AssessmentStore>((set, get) => ({
 
       console.log("✅ Pergunta validada:", questionId);
 
-      // ✅ Verificar se já existe uma resposta para esta pergunta
       const { data: existingAnswer, error: fetchError } = await supabase
         .from("assessment_answers")
         .select("id")
@@ -149,7 +291,6 @@ export const useAssessmentStore = create<AssessmentStore>((set, get) => ({
         throw fetchError;
       }
 
-      // ✅ Preparar dados para inserção/atualização
       const answerData = {
         assessment_id: currentAssessment.id,
         question_id: questionId,
@@ -162,7 +303,6 @@ export const useAssessmentStore = create<AssessmentStore>((set, get) => ({
       console.log("📝 Dados preparados:", answerData);
 
       if (existingAnswer) {
-        // ✅ Atualizar resposta existente
         console.log("🔄 Atualizando resposta existente:", existingAnswer.id);
 
         const { error: updateError } = await supabase
@@ -177,7 +317,6 @@ export const useAssessmentStore = create<AssessmentStore>((set, get) => ({
 
         console.log("✅ Resposta atualizada com sucesso");
       } else {
-        // ✅ Inserir nova resposta
         console.log("➕ Inserindo nova resposta");
 
         const { error: insertError } = await supabase
@@ -192,12 +331,14 @@ export const useAssessmentStore = create<AssessmentStore>((set, get) => ({
         console.log("✅ Resposta inserida com sucesso");
       }
 
-      // ✅ Atualizar estado local
       const newAnswers = new Map(answers);
       newAnswers.set(questionId, answer);
       set({ answers: newAnswers });
 
-      console.log("✅ Estado local atualizado. Total de respostas:", newAnswers.size);
+      console.log(
+        "✅ Estado local atualizado. Total de respostas:",
+        newAnswers.size
+      );
     } catch (error: any) {
       console.error("❌ Erro ao salvar resposta:", error);
       throw error;
@@ -205,7 +346,6 @@ export const useAssessmentStore = create<AssessmentStore>((set, get) => ({
   },
 
   fetchAnswers: async (assessmentId: string) => {
-    set({ loading: true, error: null });
     try {
       console.log("📥 Buscando respostas do assessment:", assessmentId);
 
@@ -237,10 +377,10 @@ export const useAssessmentStore = create<AssessmentStore>((set, get) => ({
 
       console.log("📊 Map de respostas criado. Size:", answersMap.size);
 
-      set({ answers: answersMap, loading: false });
+      set({ answers: answersMap });
     } catch (error: any) {
       console.error("❌ Erro ao buscar respostas:", error);
-      set({ error: error.message, loading: false });
+      set({ error: error.message });
     }
   },
 
@@ -252,6 +392,7 @@ export const useAssessmentStore = create<AssessmentStore>((set, get) => ({
         .update({
           status: "completed",
           completed_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
         })
         .eq("id", assessmentId);
 
@@ -276,6 +417,6 @@ export const useAssessmentStore = create<AssessmentStore>((set, get) => ({
   },
 
   clearCurrentAssessment: () => {
-    set({ currentAssessment: null, answers: new Map() });
+    set({ currentAssessment: null, answers: new Map(), isCreating: false });
   },
 }));
